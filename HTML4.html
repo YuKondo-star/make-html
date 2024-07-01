@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>カラフルHTML保存&実行アプリ</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f0f8ff;
+            color: #333;
+        }
+        h1, h2 {
+            color: #4a4a4a;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        textarea, input[type="text"] {
+            width: 100%;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            border: 2px solid #3498db;
+            padding: 10px;
+            font-size: 14px;
+        }
+        textarea {
+            height: 200px;
+        }
+        button {
+            margin-right: 10px;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        button:hover {
+            opacity: 0.8;
+        }
+        #saveBtn { background-color: #2ecc71; color: white; }
+        #runBtn { background-color: #3498db; color: white; }
+        #clearBtn { background-color: #e74c3c; color: white; }
+        #fetchBtn { background-color: #9b59b6; color: white; }
+        select {
+            width: 100%;
+            padding: 10px;
+            border-radius: 10px;
+            border: 2px solid #9b59b6;
+            margin-top: 20px;
+            font-size: 16px;
+        }
+        #output {
+            border: 2px solid #f39c12;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            background-color: white;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+        }
+        #htmlDisplay {
+            white-space: pre-wrap;
+            font-family: monospace;
+            background-color: #000000;
+            color: #ffffff;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 10px;
+            margin-top: 10px;
+        }
+        .tag { color: #00ffff; }
+        .attribute { color: #ff00ff; }
+        .value { color: #ffff00; }
+        .comment { color: #00ff00; }
+    </style>
+</head>
+<body>
+    <!-- 本文の内容は前回と同じです -->
+    <div class="container">
+        <h1>カラフルHTML保存&実行アプリ</h1>
+        <input type="text" id="urlInput" placeholder="URLを入力してください">
+        <button id="fetchBtn" onclick="fetchURL()">URLからHTMLを取得</button>
+        <textarea id="htmlInput" placeholder="HTMLを入力してください" oninput="updateHighlight()"></textarea>
+        <div id="htmlDisplay"></div>
+        <div>
+            <button id="saveBtn" onclick="saveHTML()">保存</button>
+            <button id="runBtn" onclick="runHTML()">実行</button>
+            <button id="clearBtn" onclick="clearStorage()">全削除</button>
+        </div>
+        <select id="savedHTML" onchange="loadHTML()">
+            <option value="">保存されたHTMLを選択</option>
+        </select>
+        <h2>出力:</h2>
+        <div id="output"></div>
+    </div>
+
+    <script>
+        // JavaScriptの内容は前回と同じです
+        function saveHTML() {
+            const html = document.getElementById('htmlInput').value;
+            const title = prompt('保存するHTMLのタイトルを入力してください:');
+            if (title) {
+                localStorage.setItem(title, html);
+                updateSavedList();
+            }
+        }
+
+        function runHTML() {
+            const html = document.getElementById('htmlInput').value;
+            document.getElementById('output').innerHTML = html;
+        }
+
+        function loadHTML() {
+            const select = document.getElementById('savedHTML');
+            const title = select.value;
+            if (title) {
+                const html = localStorage.getItem(title);
+                document.getElementById('htmlInput').value = html;
+                updateHighlight();
+            }
+        }
+
+        function updateSavedList() {
+            const select = document.getElementById('savedHTML');
+            select.innerHTML = '<option value="">保存されたHTMLを選択</option>';
+            for (let i = 0; i < localStorage.length; i++) {
+                const title = localStorage.key(i);
+                const option = document.createElement('option');
+                option.value = title;
+                option.textContent = title;
+                select.appendChild(option);
+            }
+        }
+
+        function clearStorage() {
+            if (confirm('保存された全てのHTMLを削除しますか？')) {
+                localStorage.clear();
+                updateSavedList();
+                document.getElementById('htmlInput').value = '';
+                document.getElementById('output').innerHTML = '';
+                updateHighlight();
+            }
+        }
+
+        function fetchURL() {
+            const url = document.getElementById('urlInput').value;
+            fetch(url)
+                .then(response => response.text())
+                .then(html => {
+                    document.getElementById('htmlInput').value = html;
+                    updateHighlight();
+                })
+                .catch(error => {
+                    alert('URLからHTMLを取得できませんでした。エラー: ' + error);
+                });
+        }
+
+        function updateHighlight() {
+            const input = document.getElementById('htmlInput').value;
+            const highlighted = highlightHTML(input);
+            document.getElementById('htmlDisplay').innerHTML = highlighted;
+        }
+
+        function highlightHTML(html) {
+            return html
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/(".*?")/g, '<span class="value">$1</span>')
+                .replace(/(&lt;\/?[a-z0-9]+)/gi, '<span class="tag">$1</span>')
+                .replace(/([a-z0-9-]+)=/gi, '<span class="attribute">$1</span>=')
+                .replace(/(&lt;!--.*?--&gt;)/g, '<span class="comment">$1</span>');
+        }
+
+        updateSavedList();
+        updateHighlight();
+    </script>
+</body>
+</html>
